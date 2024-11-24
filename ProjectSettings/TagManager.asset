@@ -6,6 +6,7 @@ TagManager:
   tags:
   - SwordFire
   - FxTemporaire
+  - Skeleton
   layers:
   - Default
   - TransparentFX

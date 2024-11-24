@@ -95,15 +95,6 @@ public class EnemyAI : Health
                 navMeshAgent.SetDestination(transform.position); // Dừng di chuyển
                 ChangeState(CharacterState.Attack);
                 lastAttackTime = Time.time;
-
-                // Chọn ngẫu nhiên giữa Attack01 và Attack02
-                int attackType = Random.Range(0, 2);
-                if (attackType == 0) 
-                { animator.SetTrigger("Attack01"); }
-                else 
-                { animator.SetTrigger("Attack02"); }
-                ChangeState(CharacterState.Attack);
-
             }
         }
         else if (distanceToTarget <= retreatRange)
