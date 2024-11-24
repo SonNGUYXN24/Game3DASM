@@ -1,38 +1,178 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class EnemyAI : MonoBehaviour
+public class EnemyAI : Health
 {
     public NavMeshAgent navMeshAgent;
-    public Transform target;
-    public float radius = 100f; //bán kính tìm kiếm mục tiêu
-    public Vector3 originalPosition; //Vij tris ban ddaauf
-    public float maxDistance = 50f;
+    public Transform target; // Mục tiêu (Player)
+    public float detectionRadius = 10f; // Bán kính phát hiện mục tiêu
+    public float attackRange = 2.5f; // Khoảng cách tấn công
+    public float retreatRange = 1.5f; // Khoảng cách tối thiểu để giữ khoảng cách khi tấn công
+    public float maxDistance = 50f; // Khoảng cách tối đa từ vị trí ban đầu
+    public Animator animator;
+    public float attackCooldown = 2f; // Thời gian hồi đòn tấn công
+    public float damage = 10f; // Lượng sát thương
+    private float lastAttackTime = 0f; // Lần tấn công cuối cùng
+    public DamageZone damageZone;
 
+    private Vector3 originalPosition; // Vị trí ban đầu
+    private CharacterState currentState = CharacterState.Normal; // Trạng thái hiện tại
+
+    public enum CharacterState
+    {
+        Normal,
+        Attack,
+        Die
+    }
 
     private void Start()
     {
+        if (navMeshAgent == null)
+        {
+            Debug.LogError("NavMeshAgent chưa được gắn.");
+            return;
+        }
+
+        if (target == null)
+        {
+            Debug.LogError("Target chưa được gắn.");
+            return;
+        }
+
         originalPosition = transform.position;
+        currentHP = maxHP;
+
+        // Kiểm tra nếu Enemy đang trên NavMesh
+        if (!navMeshAgent.isOnNavMesh)
+        {
+            Debug.LogError("Enemy không nằm trên NavMesh.");
+            enabled = false; // Tắt script để tránh lỗi
+        }
     }
 
-
-    void Update()
+    private void Update()
     {
-        //khoảng cách từ vị trí hiện tại đến vị trí ban đầu
-        var distanceToOriginal = Vector3.Distance(originalPosition, transform.position);
-        //khoảng cách từ vị trí hiện tại đến mục tiêu
-        var distance = Vector3.Distance(target.position, transform.position);
-        if (distance <= radius && distanceToOriginal <= maxDistance)
+        if (currentState == CharacterState.Die || navMeshAgent == null || !navMeshAgent.isActiveAndEnabled)
         {
-            //di chuyển đến mục tiêu
-            navMeshAgent.SetDestination(target.position);
+            return;
         }
-        if (distance > radius || distanceToOriginal > maxDistance)
+
+        float distanceToTarget = Vector3.Distance(target.position, transform.position);
+        float distanceToOriginal = Vector3.Distance(originalPosition, transform.position);
+
+        // Enemy ở trong phạm vi phát hiện
+        if (distanceToTarget <= detectionRadius && distanceToOriginal <= maxDistance)
         {
-            //di chuyển về vị trí ban đầu
+            HandleMovementAndAttack(distanceToTarget);
+        }
+        else
+        {
+            // Quay về vị trí ban đầu nếu ra khỏi phạm vi
             navMeshAgent.SetDestination(originalPosition);
+            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
+
+            if (distanceToOriginal < 1f)
+            {
+                ChangeState(CharacterState.Normal);
+            }
         }
+    }
+
+    private void HandleMovementAndAttack(float distanceToTarget)
+    {
+        if (distanceToTarget > attackRange)
+        {
+            // Di chuyển đến gần mục tiêu
+            navMeshAgent.SetDestination(target.position);
+            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
+            ChangeState(CharacterState.Normal);
+        }
+        else if (distanceToTarget <= attackRange && distanceToTarget > retreatRange)
+        {
+            // Tấn công nếu đủ gần nhưng không quá sát
+            if (Time.time > lastAttackTime + attackCooldown)
+            {
+                navMeshAgent.SetDestination(transform.position); // Dừng di chuyển
+                ChangeState(CharacterState.Attack);
+                lastAttackTime = Time.time;
+            }
+        }
+        else if (distanceToTarget <= retreatRange)
+        {
+            // Rút lui nếu quá sát
+            Vector3 retreatDirection = (transform.position - target.position).normalized;
+            Vector3 retreatPosition = transform.position + retreatDirection * 2f; // Di chuyển ra xa 2 đơn vị
+            navMeshAgent.SetDestination(retreatPosition);
+            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
+        }
+    }
+
+    private void ChangeState(CharacterState newState)
+    {
+        if (currentState == newState) return;
+
+        // Thoát trạng thái hiện tại
+        switch (currentState)
+        {
+            case CharacterState.Normal:
+                damageZone.EndAttack();
+                break;
+            case CharacterState.Attack:
+                break;
+        }
+
+        // Bắt đầu trạng thái mới
+        switch (newState)
+        {
+            case CharacterState.Normal:
+                animator.SetFloat("Speed", 0f);
+                break;
+            case CharacterState.Attack:
+                animator.SetTrigger("Attack");
+                damageZone.BeginAttack();
+                break;
+            case CharacterState.Die:
+                navMeshAgent.enabled = false;
+                animator.SetTrigger("Die");
+                Destroy(gameObject, 5f);
+                break;
+        }
+
+        currentState = newState;
+    }
+
+    public override void TakeDamage(float damage)
+    {
+        base.TakeDamage(damage);
+        if (currentHP <= 0)
+        {
+            ChangeState(CharacterState.Die);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("SwordFire"))
+        {
+            TakeDamage(50);
+        }
+    }
+
+    // Phương thức gọi bởi sự kiện animation khi Enemy tấn công xong
+    public void OnAttackEnd()
+    {
+        ChangeState(CharacterState.Normal);
+    }
+
+    // Phương thức sự kiện bắt đầu vùng sát thương khi animation tấn công bắt đầu
+    public void DrBeginAttack()
+    {
+        damageZone.BeginAttack();
+    }
+
+    // Phương thức sự kiện kết thúc vùng sát thương khi animation tấn công kết thúc
+    public void DrEndAttack()
+    {
+        damageZone.EndAttack();
     }
 }
