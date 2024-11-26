@@ -49,7 +49,7 @@ public class CameraController : MonoBehaviour
 
             currentRotation.x -= mouseY;
             currentRotation.y += mouseX;
-            currentRotation.x = Mathf.Clamp(currentRotation.x, -35f, 60f);
+            currentRotation.x = Mathf.Clamp(currentRotation.x, -5f, 10f);
         }
         else
         {

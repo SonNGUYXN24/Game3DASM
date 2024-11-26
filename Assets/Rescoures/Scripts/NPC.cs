@@ -8,13 +8,12 @@ public class NPC : MonoBehaviour
     public string[] content; //nội dung của npc
     public TextMeshProUGUI npcTextContent; //Tham chiếu đến text content
 
-    public Coroutine coroutine;
+    private Coroutine coroutine;
 
-
-    //Nhiệm vụ NPC
+    // Nhiệm vụ NPC
     public QuestItem questItem;
 
-    public PlayerQuests playerQuests;
+    private PlayerQuest playerQuests;
 
     private void Start()
     {
@@ -27,46 +26,54 @@ public class NPC : MonoBehaviour
         npcTextContent.text = "";
         foreach (var line in content)
         {
-            for(int i = 0; i < line.Length; i++)
+            foreach (char character in line)
             {
-                npcTextContent.text += line[i];
+                npcTextContent.text += character;
                 yield return new WaitForSeconds(0.1f);
             }
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(1f); // Thêm độ trễ giữa các dòng để người chơi có thể đọc dễ dàng hơn
         }
     }
+
     public void SkipContent()
     {
-        StopCoroutine(coroutine);
-        //hiện nút qua nhiệm vụ
+        if (coroutine != null)
+        {
+            StopCoroutine(coroutine);
+            npcTextContent.text = string.Join("\n", content); // Hiển thị toàn bộ nội dung ngay lập tức
+        }
+        // Hiện nút qua nhiệm vụ
     }
 
-    public void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Player"))
+        if (other.CompareTag("Player"))
         {
-            playerQuests = other.gameObject.GetComponent<PlayerQuests>();
+            playerQuests = other.GetComponent<PlayerQuest>();
             npcPanel.SetActive(true);
             coroutine = StartCoroutine(ReadContent());
         }
     }
-    public void OnTriggerExit(Collider other)
+
+    private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.CompareTag("Player"))
+        if (other.CompareTag("Player"))
         {
             npcPanel.SetActive(false);
-            StopCoroutine(coroutine);
+            if (coroutine != null)
+            {
+                StopCoroutine(coroutine);
+                coroutine = null;
+            }
         }
     }
 
     public void TakeQuest()
     {
-        if(playerQuests != null)
+        if (playerQuests != null && questItem != null)
         {
             playerQuests.TakeQuest(questItem);
+            Debug.Log("Nhiệm vụ đã được giao cho người chơi.");
         }
     }
-
-    
 }
-

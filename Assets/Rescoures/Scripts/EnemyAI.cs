@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -96,14 +98,6 @@ public class EnemyAI : Health
                 ChangeState(CharacterState.Attack);
                 lastAttackTime = Time.time;
             }
-
-            // Chọn ngẫu nhiên giữa Attack01 và Attack02
-            int attackType = Random.Range(0, 2);
-            if (attackType == 0)
-            { animator.SetTrigger("Attack01"); }
-            else { animator.SetTrigger("Attack02"); }
-            ChangeState(CharacterState.Attack);
-
         }
         else if (distanceToTarget <= retreatRange)
         {
@@ -183,4 +177,21 @@ public class EnemyAI : Health
     {
         damageZone.EndAttack();
     }
+
+    private void OnDestroy()
+         {
+    // Tìm người chơi
+    GameObject player = GameObject.FindWithTag("Player");
+    if (player != null)
+    {
+        // Lấy script PlayerQuest từ người chơi
+        PlayerQuest playerQuest = player.GetComponent<PlayerQuest>();
+        if (playerQuest != null)
+        {
+            // Gửi thông báo cập nhật tiến độ nhiệm vụ dựa trên tag của Enemy
+            playerQuest.CollectItem(gameObject.tag); // Tag của quái được truyền vào
+        }
+    }
+}
+
 }

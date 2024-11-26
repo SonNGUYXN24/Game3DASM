@@ -25,6 +25,7 @@ public class Character : Health
     public ParticleSystem attackHitFX;
     public AudioSource audioSource;
     public AudioClip attackSound;
+    
 
     public float healthRegenRate = 2f; // Lượng máu hồi mỗi giây
     public enum CharacterState
@@ -206,6 +207,13 @@ public class Character : Health
                 currentHP = Mathf.Clamp(currentHP, 0, maxHP); // Đảm bảo máu không vượt quá maxHP
                 UpdateHealthUI();
             }
+        }
+    }
+
+
+    public void OnTriggerEnter(Collider other){
+        if(gameObject.CompareTag("Blood")){
+
         }
     }
 }

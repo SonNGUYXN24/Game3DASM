@@ -1018,7 +1018,7 @@ MonoBehaviour:
   fireSwordInput: 0
   mainCamera: {fileID: 0}
   movementSpeed: 3
-  rotationSpeed: 10
+  rotationSpeed: 0.01
   swordFirePrefab: {fileID: 2327320006159094494, guid: b312b3a0f515ed842a1f63267164d7f5, type: 3}
   swordSpawnPoints:
   - {fileID: 4272452055911331738}

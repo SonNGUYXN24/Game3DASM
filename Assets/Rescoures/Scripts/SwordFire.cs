@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic; // Thêm using cho List
 using UnityEngine;
 
 public class SwordFire : MonoBehaviour
@@ -8,6 +9,8 @@ public class SwordFire : MonoBehaviour
     public ParticleSystem fireEffect;
     public ParticleSystem explosionEffect;
     public Vector3 shootDirection = Vector3.forward; // Biến hướng bắn có thể chỉnh
+    public List<string> enemyTags; // Danh sách tag của Enemy
+    public float maxDistance = 20f; // Khoảng cách tối đa để kiếm bay theo Enemy
 
     private bool hasExploded = false;
     private bool isRotationComplete = false;
@@ -58,7 +61,38 @@ public class SwordFire : MonoBehaviour
         // Chỉ di chuyển nếu chưa nổ và đã thực hiện xoay trục
         if (!hasExploded && isRotationComplete)
         {
-            transform.Translate(shootDirection * speed * Time.deltaTime, Space.World);
+            Vector3 direction = shootDirection; // Hướng bắn mặc định là shootDirection
+
+            GameObject closestEnemy = null;
+            float closestDistance = Mathf.Infinity;
+
+            // Kiểm tra tất cả các tag trong danh sách enemyTags
+            foreach (string enemyTag in enemyTags)
+            {
+                GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+                foreach (GameObject enemy in enemies)
+                {
+                    float distanceToEnemy = Vector3.Distance(transform.position, enemy.transform.position);
+                    if (distanceToEnemy < closestDistance && distanceToEnemy <= maxDistance)
+                    {
+                        closestDistance = distanceToEnemy;
+                        closestEnemy = enemy;
+                    }
+                }
+            }
+
+            if (closestEnemy != null)
+            {
+                // Nếu có Enemy trong khoảng cách quy định, kiếm sẽ bay theo hướng của Enemy gần nhất
+                direction = (closestEnemy.transform.position - transform.position).normalized;
+            }
+
+            // Tính toán góc quay cho trục Z để kiếm luôn chỉ hướng bay
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            targetRotation *= Quaternion.Euler(90, 0, 0); // Giữ trục X cố định ở 90 độ
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
+
+            transform.Translate(direction * speed * Time.deltaTime, Space.World);
         }
     }
 
