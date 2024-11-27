@@ -128,6 +128,7 @@ MonoBehaviour:
   shootDirection: {x: 0, y: 0, z: 1}
   enemyTags:
   - Albino
+  - bebu
   maxDistance: 20
   audioSource: {fileID: 5872655966510960044}
   explosionSoundEX: {fileID: 8300000, guid: 41772a70a5343a94db99d5dc9a69d1f8, type: 3}

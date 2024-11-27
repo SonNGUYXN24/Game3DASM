@@ -102,9 +102,9 @@ MonoBehaviour:
   speed: 10
   lifetime: 5
   explosionEffect: {fileID: 4911058835107526290}
-  shootDirection: {x: 0, y: 0, z: 1}
   enemyTags:
   - Albino
+  - bebu
   maxDistance: 50
   audioSource: {fileID: 836241215610354666}
   explosionSoundEX: {fileID: 8300000, guid: 41772a70a5343a94db99d5dc9a69d1f8, type: 3}
