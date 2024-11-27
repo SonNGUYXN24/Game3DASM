@@ -7,6 +7,10 @@ TagManager:
   - SwordFire
   - FxTemporaire
   - Skeleton
+  - skeleton
+  - Albino
+  - Blood
+  - Mana
   layers:
   - Default
   - TransparentFX

@@ -15,6 +15,7 @@ public class PlayerInput : MonoBehaviour
     public float movementSpeed = 5f;
     public float rotationSpeed = 10f;
     public GameObject swordFirePrefab; // Prefab của kiếm lửa
+    public GameObject swordFireRotationPrefab;
     public Transform[] swordSpawnPoints; // Mảng các điểm sinh ra kiếm lửa
     public Transform[] swordRotationSpawn; // Dùng riêng cho FireSwordRotation
     public ParticleSystem[] swordTrails; // Mảng các ParticleSystem cho Sword Trail
@@ -38,6 +39,8 @@ public class PlayerInput : MonoBehaviour
         {
             trail.Stop();
         }
+        
+        fireSwordRotationEffect.Stop();
 
         if (fireSwordRotationEffect != null)
         {
@@ -163,10 +166,10 @@ public class PlayerInput : MonoBehaviour
         // Tạo kiếm tại các vị trí ban đầu
         for (int i = 0; i < swordRotationSpawn.Length; i++)
         {
-            swords[i] = Instantiate(swordFirePrefab, swordRotationSpawn[i].position, Quaternion.identity);
+            swords[i] = Instantiate(swordFireRotationPrefab, swordRotationSpawn[i].position, Quaternion.identity);
         }
 
-        float rotationTime = 15f;
+        float rotationTime = 10f;
         float elapsedTime = 0f;
 
         while (elapsedTime < rotationTime)

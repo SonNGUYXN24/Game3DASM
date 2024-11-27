@@ -126,6 +126,9 @@ MonoBehaviour:
   fireEffect: {fileID: 1941320087276021454}
   explosionEffect: {fileID: 17536856634908143}
   shootDirection: {x: 0, y: 0, z: 1}
+  enemyTags:
+  - Albino
+  maxDistance: 20
   audioSource: {fileID: 5872655966510960044}
   explosionSoundEX: {fileID: 8300000, guid: 41772a70a5343a94db99d5dc9a69d1f8, type: 3}
   rotationSwordEF: {fileID: 8300000, guid: be1e654f5b0b66e4d8dc37031f8e2a9a, type: 3}
