@@ -8,19 +8,23 @@ public class PlayerInput : MonoBehaviour
     public float horizontalInput;
     public float verticalInput;
     public bool attackInput;
-    public bool fireSwordInput; // Biến kiểm tra phím tấn công kiếm lửa
+    public bool fireSwordInput;
+    public bool fireSwordRotationInput; // Biến kiểm tra phím "X" cho kỹ năng quay kiếm
 
     public Camera mainCamera;
     public float movementSpeed = 5f;
     public float rotationSpeed = 10f;
     public GameObject swordFirePrefab; // Prefab của kiếm lửa
     public Transform[] swordSpawnPoints; // Mảng các điểm sinh ra kiếm lửa
+    public Transform[] swordRotationSpawn; // Dùng riêng cho FireSwordRotation
     public ParticleSystem[] swordTrails; // Mảng các ParticleSystem cho Sword Trail
-    public Vector3 shootDirection = Vector3.forward; // Hướng bắn mặc định
+    public ParticleSystem fireSwordRotationEffect; // Hiệu ứng riêng cho kỹ năng FireSwordRotation
+    public Vector3 shootDirection = Vector3.forward;
 
-    public MP mp; // Đối tượng MP của nhân vật
-    public TextMeshProUGUI insufficientMPText; // Text thông báo khi MP không đủ
-    public float mpCost = 20f; // MP tiêu hao khi sử dụng kỹ năng
+    public MP mp;
+    public TextMeshProUGUI insufficientMPText;
+    public float mpCost = 20f; // MP tiêu hao cho FireSword
+    public float fireSwordRotationCost = 100f; // MP tiêu hao cho FireSwordRotation
 
     private CharacterController characterController;
     private Vector3 moveDirection;
@@ -29,13 +33,17 @@ public class PlayerInput : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
 
-        // Dừng tất cả Sword Trail khi bắt đầu
+        // Tắt tất cả hiệu ứng khi bắt đầu
         foreach (ParticleSystem trail in swordTrails)
         {
             trail.Stop();
         }
 
-        // Đảm bảo Text thông báo "MP không đủ" bị ẩn khi bắt đầu
+        if (fireSwordRotationEffect != null)
+        {
+            fireSwordRotationEffect.Stop();
+        }
+
         if (insufficientMPText != null)
         {
             insufficientMPText.gameObject.SetActive(false);
@@ -46,22 +54,32 @@ public class PlayerInput : MonoBehaviour
     {
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
+
         if (!attackInput && Time.timeScale > 0)
         {
             attackInput = Input.GetMouseButtonDown(0);
         }
 
-        // Kiểm tra phím "C" để sử dụng kỹ năng kiếm lửa
         if (!fireSwordInput && Time.timeScale > 0)
         {
             fireSwordInput = Input.GetKeyDown(KeyCode.C);
         }
 
-        // Kích hoạt kiếm lửa nếu đủ MP
+        if (!fireSwordRotationInput && Time.timeScale > 0)
+        {
+            fireSwordRotationInput = Input.GetKeyDown(KeyCode.X);
+        }
+
         if (fireSwordInput)
         {
             TryFireSword();
-            fireSwordInput = false; // Đặt lại biến để tránh kích hoạt liên tục
+            fireSwordInput = false;
+        }
+
+        if (fireSwordRotationInput)
+        {
+            TryFireSwordRotation();
+            fireSwordRotationInput = false;
         }
     }
 
@@ -76,19 +94,16 @@ public class PlayerInput : MonoBehaviour
         forward.Normalize();
         right.Normalize();
 
-        // Tính toán hướng di chuyển
         moveDirection = forward * verticalInput + right * horizontalInput;
         moveDirection.Normalize();
         moveDirection *= movementSpeed;
 
-        // Xoay hướng nhân vật theo hướng di chuyển
         if (moveDirection != Vector3.zero && verticalInput > 0)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
-        // Di chuyển nhân vật
         characterController.Move(moveDirection * Time.fixedDeltaTime);
     }
 
@@ -101,32 +116,92 @@ public class PlayerInput : MonoBehaviour
 
     private void TryFireSword()
     {
-        if (mp.UseMP(20)) // Trừ 20 MP
+        if (mp.UseMP(20))
         {
-            FireSword(); // Kích hoạt kỹ năng
+            FireSword();
         }
         else
         {
-            ShowInsufficientMPMessage(); // Hiển thị thông báo không đủ MP
+            ShowInsufficientMPMessage();
         }
+    }
 
+    private void TryFireSwordRotation()
+    {
+        if (mp.UseMP(100))
+        {
+            StartCoroutine(FireSwordRotation());
+        }
+        else
+        {
+            ShowInsufficientMPMessage();
+        }
     }
 
     private void FireSword()
     {
-        // Chọn ngẫu nhiên một vị trí để sinh ra kiếm lửa
         int randomIndex = Random.Range(0, swordSpawnPoints.Length);
         Transform spawnPoint = swordSpawnPoints[randomIndex];
 
-        // Tạo kiếm lửa tại vị trí đã chọn
         GameObject swordFireObject = Instantiate(swordFirePrefab, spawnPoint.position, Quaternion.identity);
 
-        // Truyền hướng bắn cho kiếm lửa
         SwordFire swordFire = swordFireObject.GetComponent<SwordFire>();
         swordFire.shootDirection = transform.forward;
 
-        // Chạy hiệu ứng Sword Trail
         swordTrails[randomIndex].Play();
+    }
+
+    private IEnumerator FireSwordRotation()
+    {
+        if (fireSwordRotationEffect != null)
+        {
+            fireSwordRotationEffect.Play(); // Bật hiệu ứng
+        }
+
+        GameObject[] swords = new GameObject[swordRotationSpawn.Length];
+
+        // Tạo kiếm tại các vị trí ban đầu
+        for (int i = 0; i < swordRotationSpawn.Length; i++)
+        {
+            swords[i] = Instantiate(swordFirePrefab, swordRotationSpawn[i].position, Quaternion.identity);
+        }
+
+        float rotationTime = 15f;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < rotationTime)
+        {
+            elapsedTime += Time.deltaTime;
+
+            float angleStep = 360f / swordRotationSpawn.Length;
+
+            for (int i = 0; i < swordRotationSpawn.Length; i++)
+            {
+                float angle = elapsedTime * 90f + i * angleStep; // Xoay theo thời gian
+                float radians = angle * Mathf.Deg2Rad;
+
+                Vector3 newPosition = new Vector3(
+                    transform.position.x + Mathf.Cos(radians) * 3f, // Bán kính 3f
+                    transform.position.y,
+                    transform.position.z + Mathf.Sin(radians) * 3f
+                );
+
+                swords[i].transform.position = newPosition;
+            }
+
+            yield return null;
+        }
+
+        // Xóa các kiếm sau khi hết thời gian
+        foreach (GameObject sword in swords)
+        {
+            Destroy(sword);
+        }
+
+        if (fireSwordRotationEffect != null)
+        {
+            fireSwordRotationEffect.Stop(); // Dừng hiệu ứng
+        }
     }
 
     private void ShowInsufficientMPMessage()
@@ -140,7 +215,7 @@ public class PlayerInput : MonoBehaviour
     private IEnumerator DisplayInsufficientMPMessage()
     {
         insufficientMPText.gameObject.SetActive(true);
-        yield return new WaitForSeconds(2f); // Hiển thị thông báo trong 2 giây
+        yield return new WaitForSeconds(2f);
         insufficientMPText.gameObject.SetActive(false);
     }
 }
