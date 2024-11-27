@@ -25,7 +25,6 @@ public class Character : Health
     public ParticleSystem attackHitFX;
     public AudioSource audioSource;
     public AudioClip attackSound;
-    
 
     public float healthRegenRate = 2f; // Lượng máu hồi mỗi giây
     public enum CharacterState
@@ -60,7 +59,16 @@ public class Character : Health
                 return;
         }
 
-        characterController.Move(movementVelocity * Time.fixedDeltaTime);
+        // Di chuyển nhân vật dựa vào trạng thái bay
+        if (playerInput.isFlying)
+        {
+            SwordFlyMove();
+        }
+        else
+        {
+            ApplyGravity();
+            characterController.Move(movementVelocity * Time.fixedDeltaTime);
+        }
     }
 
     void CalculateMovement()
@@ -210,9 +218,57 @@ public class Character : Health
         }
     }
 
+    private void ApplyGravity()
+    {
+        // Áp dụng trọng lực khi không bay
+        if (!playerInput.isFlying)
+        {
+            movementVelocity.y += Physics.gravity.y * Time.fixedDeltaTime;
+        }
+    }
 
-    public void OnTriggerEnter(Collider other){
-        if(gameObject.CompareTag("Blood")){
+    private void SwordFlyMove()
+    {
+        Vector3 forward = mainCamera.transform.forward;
+        Vector3 right = mainCamera.transform.right;
+
+        forward.Normalize();
+        right.Normalize();
+
+        // Xử lý di chuyển XZ
+        Vector3 moveDirection = forward * playerInput.verticalInput + right * playerInput.horizontalInput;
+        moveDirection.Normalize();
+        moveDirection *= playerInput.flySpeed;
+
+        // Bay lên hoặc xuống dựa trên phím nhấn
+        if (Input.GetKey(KeyCode.Space))
+        {
+            moveDirection.y = playerInput.flySpeed; // Bay lên
+        }
+        else if (Input.GetKey(KeyCode.LeftControl))
+        {
+            moveDirection.y = -playerInput.flySpeed; // Hạ xuống
+        }
+        else
+        {
+            moveDirection.y = 0; // Giữ nguyên độ cao
+        }
+
+        // Di chuyển nhân vật
+        characterController.Move(moveDirection * Time.deltaTime);
+
+        // Xoay nhân vật nếu đang di chuyển
+        if (moveDirection.x != 0 || moveDirection.z != 0)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(new Vector3(moveDirection.x, 0, moveDirection.z));
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, playerInput.rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    public void OnTriggerEnter(Collider other)
+    {
+        if (gameObject.CompareTag("Blood"))
+        {
 
         }
     }
