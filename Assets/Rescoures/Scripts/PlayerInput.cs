@@ -11,7 +11,7 @@ public class PlayerInput : MonoBehaviour
     public bool fireSwordInput;
     public bool fireSwordRotationInput;
 
-    public Camera mainCamera; // KhaiBaoCamera
+    public Camera mainCamera; // Khai báo Camera
     public float movementSpeed = 5f;
     public float rotationSpeed = 10f;
     public GameObject swordFirePrefab;
@@ -27,19 +27,19 @@ public class PlayerInput : MonoBehaviour
     public float mpCost = 20f;
     public float fireSwordRotationCost = 100f;
 
-    [SerializeField]private CharacterController characterController;
+    [SerializeField] private CharacterController characterController;
     private Vector3 moveDirection;
 
     public bool isFlying = false; // Trạng thái bay
-    public GameObject swordFly; // Kiếm dưới chân khi bay
     public float flySpeed = 5f;
     public AudioSource flySound; // Âm thanh khi bay
     public ParticleSystem flyEffect; // Hiệu ứng khi bay
     private Vector3 velocity; // Tốc độ rơi
 
+    public AudioClip magicSound; // Âm thanh khi bật chế độ bay
+
     private void Start()
     {
-
         foreach (ParticleSystem trail in swordTrails)
         {
             trail.Stop();
@@ -50,8 +50,9 @@ public class PlayerInput : MonoBehaviour
 
         if (flyEffect != null)
         {
-            flyEffect.Stop();
+            flyEffect.Stop();  
         }
+        flySound.Stop();
     }
 
     private void Update()
@@ -64,6 +65,7 @@ public class PlayerInput : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleFlyMode();
+            flySound.Play();
         }
 
         // Điều khiển skill luôn khả dụng dù bay hay không bay
@@ -98,11 +100,12 @@ public class PlayerInput : MonoBehaviour
         // Di chuyển khi bay hoặc đi bộ
         if (isFlying)
         {
-            SwordFlyMove();
+            FlyModeMove();
         }
         else
         {
             NormalMove();
+            flySound.Stop();
         }
     }
 
@@ -113,11 +116,15 @@ public class PlayerInput : MonoBehaviour
             ApplyGravity(); // Áp dụng trọng lực khi không bay
             NormalMove();   // Di chuyển bình thường
         }
+        else
+        {
+            FlyModeMove(); // Điều khiển bay khi đang ở chế độ bay
+        }
     }
 
     private void ApplyGravity()
     {
-        velocity.y += Physics.gravity.y * Time.deltaTime; // Áp dụng trọng lực chỉ khi không bay
+        velocity.y += Physics.gravity.y * Time.deltaTime; // Áp dụng trọng lực
         characterController.Move(velocity * Time.deltaTime);
     }
 
@@ -146,20 +153,21 @@ public class PlayerInput : MonoBehaviour
         characterController.Move(moveDirection * Time.fixedDeltaTime);
     }
 
-    private void SwordFlyMove()
+    private void FlyModeMove()
     {
+        // Vector điều khiển di chuyển
         Vector3 forward = mainCamera.transform.forward;
         Vector3 right = mainCamera.transform.right;
 
         forward.Normalize();
         right.Normalize();
 
-        // Xử lý di chuyển XZ
+        // Di chuyển XZ
         moveDirection = forward * verticalInput + right * horizontalInput;
         moveDirection.Normalize();
         moveDirection *= flySpeed;
 
-        // Bay lên hoặc xuống dựa trên phím nhấn
+        // Điều khiển độ cao
         if (Input.GetKey(KeyCode.Space))
         {
             moveDirection.y = flySpeed; // Bay lên
@@ -176,7 +184,7 @@ public class PlayerInput : MonoBehaviour
         // Di chuyển nhân vật
         characterController.Move(moveDirection * Time.deltaTime);
 
-        // Xoay nhân vật nếu đang di chuyển
+        // Xoay nhân vật theo hướng di chuyển
         if (moveDirection.x != 0 || moveDirection.z != 0)
         {
             Quaternion targetRotation = Quaternion.LookRotation(new Vector3(moveDirection.x, 0, moveDirection.z));
@@ -190,28 +198,26 @@ public class PlayerInput : MonoBehaviour
 
         if (isFlying)
         {
-            velocity = Vector3.zero; // Đặt lại vận tốc
+            velocity = Vector3.zero; // Đặt lại vận tốc để tránh rơi
             flySound?.Play();
             flyEffect?.Play();
 
-            // Kích hoạt GameObject SwordFly
-            if (swordFly != null)
+            if (magicSound != null)
             {
-                swordFly.SetActive(true);
+                AudioSource.PlayClipAtPoint(magicSound, transform.position); // Chạy âm thanh khi bật bay
             }
+
         }
         else
         {
             flySound?.Stop();
             flyEffect?.Stop();
 
-            // Ẩn GameObject SwordFly
-            if (swordFly != null)
-            {
-                swordFly.SetActive(false);
-            }
+            velocity = Vector3.zero; // Đặt lại vận tốc khi hạ xuống
         }
     }
+
+
 
     private void OnDisable()
     {

@@ -20,6 +20,15 @@ public class EnemyAI : Health
     private Vector3 originalPosition; // Vị trí ban đầu
     private CharacterState currentState = CharacterState.Normal; // Trạng thái hiện tại
 
+    // Biến âm thanh
+    public AudioClip runSoundEffect;
+    public AudioClip attackSoundEffect;
+    private AudioSource audioSource;
+    public float maxSoundDistance = 50f; // Khoảng cách tối đa để nghe rõ âm thanh
+
+    // Biến để sinh vật phẩm
+    public GameObject itemPrefab;
+
     public enum CharacterState
     {
         Normal,
@@ -44,6 +53,10 @@ public class EnemyAI : Health
         originalPosition = transform.position;
         currentHP = maxHP;
 
+        // Thiết lập AudioSource
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.loop = true;
+
         // Kiểm tra nếu Enemy đang trên NavMesh
         if (!navMeshAgent.isOnNavMesh)
         {
@@ -62,6 +75,8 @@ public class EnemyAI : Health
         float distanceToTarget = Vector3.Distance(target.position, transform.position);
         float distanceToOriginal = Vector3.Distance(originalPosition, transform.position);
 
+        AdjustSoundVolume(distanceToTarget);
+
         // Enemy ở trong phạm vi phát hiện
         if (distanceToTarget <= detectionRadius && distanceToOriginal <= maxDistance)
         {
@@ -75,6 +90,7 @@ public class EnemyAI : Health
 
             if (distanceToOriginal < 1f)
             {
+                StopRunSound();
                 ChangeState(CharacterState.Normal);
             }
         }
@@ -87,6 +103,7 @@ public class EnemyAI : Health
             // Di chuyển đến gần mục tiêu
             navMeshAgent.SetDestination(target.position);
             animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
+            PlayRunSound();
             ChangeState(CharacterState.Normal);
         }
         else if (distanceToTarget <= attackRange && distanceToTarget > retreatRange)
@@ -95,6 +112,7 @@ public class EnemyAI : Health
             if (Time.time > lastAttackTime + attackCooldown)
             {
                 navMeshAgent.SetDestination(transform.position); // Dừng di chuyển
+                StopRunSound();
                 ChangeState(CharacterState.Attack);
                 lastAttackTime = Time.time;
             }
@@ -106,6 +124,36 @@ public class EnemyAI : Health
             Vector3 retreatPosition = transform.position + retreatDirection * 2f; // Di chuyển ra xa 2 đơn vị
             navMeshAgent.SetDestination(retreatPosition);
             animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
+            PlayRunSound();
+        }
+    }
+
+    private void PlayRunSound()
+    {
+        if (!audioSource.isPlaying || audioSource.clip != runSoundEffect)
+        {
+            audioSource.clip = runSoundEffect;
+            audioSource.Play();
+        }
+    }
+
+    private void StopRunSound()
+    {
+        if (audioSource.isPlaying && audioSource.clip == runSoundEffect)
+        {
+            audioSource.Stop();
+        }
+    }
+
+    private void AdjustSoundVolume(float distanceToTarget)
+    {
+        if (distanceToTarget <= maxSoundDistance)
+        {
+            audioSource.volume = 1f - (distanceToTarget / maxSoundDistance);
+        }
+        else
+        {
+            audioSource.volume = 0f;
         }
     }
 
@@ -131,11 +179,11 @@ public class EnemyAI : Health
                 break;
             case CharacterState.Attack:
                 animator.SetTrigger("Attack");
-                damageZone.BeginAttack();
                 break;
             case CharacterState.Die:
                 navMeshAgent.enabled = false;
                 animator.SetTrigger("Die");
+                SpawnItem(); // Sinh vật phẩm khi Enemy chết
                 Destroy(gameObject, 5f);
                 break;
         }
@@ -170,6 +218,7 @@ public class EnemyAI : Health
     public void DrBeginAttack()
     {
         damageZone.BeginAttack();
+        PlayAttackSound(); // Phát âm thanh tấn công tại thời điểm này
     }
 
     // Phương thức sự kiện kết thúc vùng sát thương khi animation tấn công kết thúc
@@ -178,20 +227,35 @@ public class EnemyAI : Health
         damageZone.EndAttack();
     }
 
-    private void OnDestroy()
-         {
-    // Tìm người chơi
-    GameObject player = GameObject.FindWithTag("Player");
-    if (player != null)
+    private void PlayAttackSound()
     {
-        // Lấy script PlayerQuest từ người chơi
-        PlayerQuest playerQuest = player.GetComponent<PlayerQuest>();
-        if (playerQuest != null)
+        if (attackSoundEffect != null)
         {
-            // Gửi thông báo cập nhật tiến độ nhiệm vụ dựa trên tag của Enemy
-            playerQuest.CollectItem(gameObject.tag); // Tag của quái được truyền vào
+            audioSource.PlayOneShot(attackSoundEffect);
         }
     }
-}
 
+    private void SpawnItem()
+    {
+        if (itemPrefab != null)
+        {
+            Instantiate(itemPrefab, transform.position, Quaternion.identity);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Tìm người chơi
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            // Lấy script PlayerQuest từ người chơi
+            PlayerQuest playerQuest = player.GetComponent<PlayerQuest>();
+            if (playerQuest != null)
+            {
+                // Gửi thông báo cập nhật tiến độ nhiệm vụ dựa trên tag của Enemy
+                playerQuest.CollectItem(gameObject.tag); // Tag của quái được truyền vào
+            }
+        }
+    }
 }

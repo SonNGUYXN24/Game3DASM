@@ -322,14 +322,14 @@ ModelImporter:
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.4835948
+      - time: 0.4550641
         functionName: DrEndAttack
         data: 
         objectReferenceParameter: {instanceID: 0}
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.922967
+      - time: 0.8830242
         functionName: OnAttackEnd
         data: 
         objectReferenceParameter: {instanceID: 0}
