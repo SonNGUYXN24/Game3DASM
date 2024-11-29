@@ -91,6 +91,10 @@ public class SwordFireRotation : MonoBehaviour
     private IEnumerator ExplodeAndDestroy()
     {
         yield return new WaitForSeconds(2f); // Thời gian cho hiệu ứng nổ
-        Destroy(gameObject);
+        if (gameObject != null) // Kiểm tra trước khi phá hủy
+        {
+            Destroy(gameObject);
+        }
     }
+
 }

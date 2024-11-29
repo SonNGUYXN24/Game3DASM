@@ -38,6 +38,11 @@ public class PlayerInput : MonoBehaviour
 
     public AudioClip magicSound; // Âm thanh khi bật chế độ bay
 
+    public float flySkillDuration = 90f; // Thời gian sử dụng skill (1 phút 30 giây)
+    private float currentFlyTime = 0f; // Thời gian còn lại
+    public TextMeshProUGUI flySkillTimerText; // TextMeshPro hiển thị thời gian skill
+    private Coroutine flySkillCoroutine; // Để quản lý coroutine skill bay
+
     private void Start()
     {
         foreach (ParticleSystem trail in swordTrails)
@@ -62,10 +67,16 @@ public class PlayerInput : MonoBehaviour
         verticalInput = Input.GetAxis("Vertical");
 
         // Chuyển đổi trạng thái bay
-        if (Input.GetKeyDown(KeyCode.H))
+         if (Input.GetKeyDown(KeyCode.H))
         {
-            ToggleFlyMode();
-            flySound.Play();
+            if (!isFlying)
+            {
+                TryToggleFlyMode();
+            }
+            else
+            {
+                ToggleFlyMode(false); // Tắt bay thủ công nếu đang bay
+            }
         }
 
         // Điều khiển skill luôn khả dụng dù bay hay không bay
@@ -106,6 +117,18 @@ public class PlayerInput : MonoBehaviour
         {
             NormalMove();
             flySound.Stop();
+        }
+    }
+
+     private void TryToggleFlyMode()
+    {
+        if (mp.UseMP(150)) // Kiểm tra đủ MP
+        {
+            ToggleFlyMode(true); // Bật chế độ bay
+        }
+        else
+        {
+            ShowInsufficientMPMessage(); // Hiển thị cảnh báo thiếu MP
         }
     }
 
@@ -192,29 +215,56 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
-    private void ToggleFlyMode()
+    private void ToggleFlyMode(bool enable)
     {
-        isFlying = !isFlying; // Chuyển đổi trạng thái bay
-
-        if (isFlying)
+        if (enable)
         {
-            velocity = Vector3.zero; // Đặt lại vận tốc để tránh rơi
+            isFlying = true; // Kích hoạt trạng thái bay
+            velocity = Vector3.zero; // Đặt lại vận tốc
             flySound?.Play();
             flyEffect?.Play();
 
             if (magicSound != null)
             {
-                AudioSource.PlayClipAtPoint(magicSound, transform.position); // Chạy âm thanh khi bật bay
+                AudioSource.PlayClipAtPoint(magicSound, transform.position); // Âm thanh khi bật chế độ bay
             }
 
+            if (flySkillCoroutine != null)
+            {
+                StopCoroutine(flySkillCoroutine); // Dừng coroutine cũ nếu có
+            }
+
+            currentFlyTime = flySkillDuration; // Đặt thời gian bắt đầu
+            flySkillCoroutine = StartCoroutine(FlySkillTimer()); // Bắt đầu đếm ngược
         }
         else
         {
+            isFlying = false; // Tắt trạng thái bay
             flySound?.Stop();
             flyEffect?.Stop();
-
-            velocity = Vector3.zero; // Đặt lại vận tốc khi hạ xuống
+            currentFlyTime = 0f; // Đặt thời gian còn lại về 0
+            flySkillTimerText?.gameObject.SetActive(false); // Ẩn text hiển thị
         }
+    }
+
+    private IEnumerator FlySkillTimer()
+    {
+        flySkillTimerText?.gameObject.SetActive(true); // Hiển thị text
+        while (currentFlyTime > 0)
+        {
+            currentFlyTime -= Time.deltaTime;
+            UpdateFlySkillTimerText();
+            yield return null;
+        }
+
+        ToggleFlyMode(false); // Tắt bay khi hết thời gian
+    }
+
+    private void UpdateFlySkillTimerText()
+    {
+        int minutes = Mathf.FloorToInt(currentFlyTime / 60);
+        int seconds = Mathf.FloorToInt(currentFlyTime % 60);
+        flySkillTimerText.text = $"Skill Boost Time: {minutes:00}:{seconds:00}";
     }
 
 
@@ -264,49 +314,60 @@ public class PlayerInput : MonoBehaviour
     }
 
     private IEnumerator FireSwordRotation()
-    {
-        fireSwordRotationEffect?.Play();
+{
+    fireSwordRotationEffect?.Play();
 
-        GameObject[] swords = new GameObject[swordRotationSpawn.Length];
+    GameObject[] swords = new GameObject[swordRotationSpawn.Length];
+
+    // Spawn kiếm ban đầu
+    for (int i = 0; i < swordRotationSpawn.Length; i++)
+    {
+        swords[i] = Instantiate(swordFireRotationPrefab, swordRotationSpawn[i].position, Quaternion.identity);
+    }
+
+    float rotationTime = 10f;
+    float elapsedTime = 0f;
+
+    while (elapsedTime < rotationTime)
+    {
+        elapsedTime += Time.deltaTime;
+
+        float angleStep = 360f / swordRotationSpawn.Length;
 
         for (int i = 0; i < swordRotationSpawn.Length; i++)
         {
-            swords[i] = Instantiate(swordFireRotationPrefab, swordRotationSpawn[i].position, Quaternion.identity);
-        }
-
-        float rotationTime = 10f;
-        float elapsedTime = 0f;
-
-        while (elapsedTime < rotationTime)
-        {
-            elapsedTime += Time.deltaTime;
-
-            float angleStep = 360f / swordRotationSpawn.Length;
-
-            for (int i = 0; i < swordRotationSpawn.Length; i++)
+            if (swords[i] == null) // Nếu kiếm bị phá hủy, spawn lại kiếm mới
             {
-                float angle = elapsedTime * 90f + i * angleStep;
-                float radians = angle * Mathf.Deg2Rad;
-
-                Vector3 newPosition = new Vector3(
-                    transform.position.x + Mathf.Cos(radians) * 3f,
-                    transform.position.y,
-                    transform.position.z + Mathf.Sin(radians) * 3f
-                );
-
-                swords[i].transform.position = newPosition;
+                swords[i] = Instantiate(swordFireRotationPrefab, swordRotationSpawn[i].position, Quaternion.identity);
             }
 
-            yield return null;
+            float angle = elapsedTime * 90f + i * angleStep;
+            float radians = angle * Mathf.Deg2Rad;
+
+            Vector3 newPosition = new Vector3(
+                transform.position.x + Mathf.Cos(radians) * 3f,
+                transform.position.y,
+                transform.position.z + Mathf.Sin(radians) * 3f
+            );
+
+            swords[i].transform.position = newPosition;
         }
 
-        foreach (GameObject sword in swords)
+        yield return null;
+    }
+
+    // Dừng hiệu ứng và phá hủy tất cả kiếm
+    foreach (GameObject sword in swords)
+    {
+        if (sword != null)
         {
             Destroy(sword);
         }
-
-        fireSwordRotationEffect?.Stop();
     }
+
+    fireSwordRotationEffect?.Stop();
+}
+
 
     private void ShowInsufficientMPMessage()
     {

@@ -12,6 +12,7 @@ TagManager:
   - Blood
   - Mana
   - bebu
+  - NPC
   layers:
   - Default
   - TransparentFX

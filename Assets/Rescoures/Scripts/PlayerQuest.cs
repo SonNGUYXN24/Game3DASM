@@ -13,12 +13,12 @@ public class PlayerQuest : MonoBehaviour
     public GameObject healthPotionPrefab; // Prefab bình máu
     public Transform rewardSpawnPoint; // Vị trí sinh phần thưởng
     public string rewardTag; // Tag phần thưởng
-    public TextMeshProUGUI potionCountText; // TextMeshPro để hiển thị số lượng bình máu
-    private int potionCount = 0; // Số lượng bình máu hiện tại
+    public GameObject npcPanel; // Tham chiếu đến NPC Panel
+    public GameObject playerCanvas; // Tham chiếu đến Player Canvas
 
+    private int potionCount = 0; // Số lượng bình máu hiện tại
     private float questDuration = 600f; // Thời gian nhiệm vụ (10 phút)
     private float remainingTime;
-
     private bool isQuestActive = false;
 
     void Update()
@@ -58,6 +58,16 @@ public class PlayerQuest : MonoBehaviour
 
         // Hiển thị thông báo nhận nhiệm vụ
         StartCoroutine(ShowNotification("Đã nhận nhiệm vụ!", 2f));
+
+        // Tắt NPC Panel và hiển thị lại Player Canvas
+        if (npcPanel != null)
+        {
+            npcPanel.SetActive(false); // Tắt NPC Panel
+        }
+        if (playerCanvas != null)
+        {
+            playerCanvas.SetActive(true); // Hiện lại Player Canvas
+        }
     }
 
     private void UpdateQuestUI()
@@ -70,7 +80,6 @@ public class PlayerQuest : MonoBehaviour
         }
     }
 
-
     private void UpdateProgressUI()
     {
         if (currentQuest != null && progressText != null)
@@ -79,12 +88,11 @@ public class PlayerQuest : MonoBehaviour
         }
     }
 
-
     private void UpdateTimerUI()
     {
         int minutes = Mathf.FloorToInt(remainingTime / 60);
         int seconds = Mathf.FloorToInt(remainingTime % 60);
-        timerText.text = $"Thời gian còn lại: {minutes:00}:{seconds:00}";
+        timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
     public void CollectItem(string itemTag)
@@ -100,7 +108,6 @@ public class PlayerQuest : MonoBehaviour
             }
         }
     }
-
 
     private void EndQuest(bool success)
     {
@@ -133,8 +140,4 @@ public class PlayerQuest : MonoBehaviour
         yield return new WaitForSeconds(duration);
         notificationText.gameObject.SetActive(false);
     }
-
-    
-
-    
 }

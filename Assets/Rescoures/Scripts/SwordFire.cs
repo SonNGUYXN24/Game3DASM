@@ -85,22 +85,24 @@ public class SwordFire : MonoBehaviour
             {
                 // Nếu có Enemy trong khoảng cách quy định, kiếm sẽ bay theo hướng của Enemy gần nhất
                 direction = (closestEnemy.transform.position - transform.position).normalized;
+
+                // Tính toán góc quay cho trục Z để kiếm luôn chỉ hướng bay
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
             }
 
-            // Tính toán góc quay cho trục Z để kiếm luôn chỉ hướng bay
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            targetRotation *= Quaternion.Euler(90, 0, 0); // Giữ trục X cố định ở 90 độ
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
-
-            transform.Translate(direction * speed * Time.deltaTime, Space.World);
+            // Di chuyển kiếm về phía trước theo hướng đã tính
+            transform.position += direction * speed * Time.deltaTime;
         }
     }
 
+
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Albino"))
+        // Kiểm tra nếu tag của đối tượng va chạm thuộc danh sách enemyTags
+        if (enemyTags.Contains(other.tag))
         {
-            // Khi va chạm với Albino, dừng di chuyển và bắt đầu hiệu ứng nổ
+            // Khi va chạm với Enemy, dừng di chuyển và bắt đầu hiệu ứng nổ
             hasExploded = true;
             fireEffect.Stop();
             explosionEffect.Play();
@@ -109,6 +111,7 @@ public class SwordFire : MonoBehaviour
             StartCoroutine(ExplodeAndDestroy());
         }
     }
+
 
     private IEnumerator ExplodeAndDestroy()
     {
