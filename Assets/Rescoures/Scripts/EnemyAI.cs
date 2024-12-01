@@ -28,7 +28,8 @@ public class EnemyAI : Health
 
     // Biến để sinh vật phẩm
     public GameObject itemPrefab;
-
+    // Biến để quản lý thanh máu
+    public BossHealthBar bossHealthBar; // Tham chiếu đến script quản lý thanh máu
     public enum CharacterState
     {
         Normal,
@@ -63,6 +64,11 @@ public class EnemyAI : Health
             Debug.LogError("Enemy không nằm trên NavMesh.");
             enabled = false; // Tắt script để tránh lỗi
         }
+        // Thiết lập thanh máu
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.UpdateHealthBar(currentHP, maxHP); 
+        }
     }
 
     private void Update()
@@ -93,6 +99,11 @@ public class EnemyAI : Health
                 StopRunSound();
                 ChangeState(CharacterState.Normal);
             }
+        }
+        // Cập nhật thanh máu
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.UpdateHealthBar(currentHP, maxHP); 
         }
     }
 
@@ -197,6 +208,11 @@ public class EnemyAI : Health
         if (currentHP <= 0)
         {
             ChangeState(CharacterState.Die);
+        }
+        // Cập nhật thanh máu khi boss bị tấn công
+        if (bossHealthBar != null)
+        {
+            bossHealthBar.UpdateHealthBar(currentHP, maxHP); 
         }
     }
 
