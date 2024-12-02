@@ -2946,9 +2946,21 @@ PrefabInstance:
       propertyPath: itemPrefab
       value: 
       objectReference: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: attackRange
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: retreatRange
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: m_Speed
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_Acceleration
-      value: 4
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_AngularSpeed
@@ -4117,9 +4129,21 @@ PrefabInstance:
       propertyPath: itemPrefab
       value: 
       objectReference: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: attackRange
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: retreatRange
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: m_Speed
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_Acceleration
-      value: 4
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_AngularSpeed
@@ -27424,9 +27448,21 @@ PrefabInstance:
       propertyPath: itemPrefab
       value: 
       objectReference: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: attackRange
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: retreatRange
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: m_Speed
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_Acceleration
-      value: 4
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_AngularSpeed
@@ -34875,9 +34911,21 @@ PrefabInstance:
       propertyPath: itemPrefab
       value: 
       objectReference: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: attackRange
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: retreatRange
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: m_Speed
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_Acceleration
-      value: 4
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_AngularSpeed
@@ -35561,8 +35609,8 @@ MonoBehaviour:
   navMeshAgent: {fileID: 1741509410}
   target: {fileID: 649730350}
   detectionRadius: 30
-  attackRange: 3
-  retreatRange: 5
+  attackRange: 5
+  retreatRange: 2.5
   maxDistance: 50
   animator: {fileID: 1741509409}
   attackCooldown: 1
@@ -37681,8 +37729,8 @@ MonoBehaviour:
   navMeshAgent: {fileID: 1814964832}
   target: {fileID: 649730350}
   detectionRadius: 30
-  attackRange: 3
-  retreatRange: 5
+  attackRange: 5
+  retreatRange: 2.5
   maxDistance: 50
   animator: {fileID: 1814964831}
   attackCooldown: 1
@@ -41614,8 +41662,8 @@ MonoBehaviour:
   navMeshAgent: {fileID: 2026841123}
   target: {fileID: 649730350}
   detectionRadius: 30
-  attackRange: 3
-  retreatRange: 5
+  attackRange: 5
+  retreatRange: 2.5
   maxDistance: 50
   animator: {fileID: 2026841121}
   attackCooldown: 1
@@ -44865,9 +44913,21 @@ PrefabInstance:
       propertyPath: itemPrefab
       value: 
       objectReference: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: attackRange
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4640944172845447182, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: retreatRange
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
+      propertyPath: m_Speed
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_Acceleration
-      value: 4
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5162802330376774201, guid: bba9bda5d2656be40b0b1c38577049df, type: 3}
       propertyPath: m_AngularSpeed
