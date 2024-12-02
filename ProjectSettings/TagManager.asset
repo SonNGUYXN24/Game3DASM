@@ -13,6 +13,7 @@ TagManager:
   - Mana
   - bebu
   - NPC
+  - Boss
   layers:
   - Default
   - TransparentFX

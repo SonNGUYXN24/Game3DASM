@@ -10117,6 +10117,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Purple
       objectReference: {fileID: 0}
+    - target: {fileID: 109776, guid: 8e302007cba46d94b970c6a0955b9628, type: 3}
+      propertyPath: m_TagString
+      value: Boss
+      objectReference: {fileID: 0}
     - target: {fileID: 419196, guid: 8e302007cba46d94b970c6a0955b9628, type: 3}
       propertyPath: m_LocalPosition.y
       value: -0.7
@@ -10193,10 +10197,10 @@ PrefabInstance:
       addedObject: {fileID: 508323508}
     - targetCorrespondingSourceObject: {fileID: 109776, guid: 8e302007cba46d94b970c6a0955b9628, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 508323507}
+      addedObject: {fileID: 508323506}
     - targetCorrespondingSourceObject: {fileID: 109776, guid: 8e302007cba46d94b970c6a0955b9628, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 508323506}
+      addedObject: {fileID: 508323510}
     - targetCorrespondingSourceObject: {fileID: 109776, guid: 8e302007cba46d94b970c6a0955b9628, type: 3}
       insertIndex: -1
       addedObject: {fileID: 508323509}
@@ -10204,11 +10208,6 @@ PrefabInstance:
 --- !u!1 &508323504 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 109776, guid: 8e302007cba46d94b970c6a0955b9628, type: 3}
-  m_PrefabInstance: {fileID: 508323503}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &508323505 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 9584802, guid: 8e302007cba46d94b970c6a0955b9628, type: 3}
   m_PrefabInstance: {fileID: 508323503}
   m_PrefabAsset: {fileID: 0}
 --- !u!143 &508323506
@@ -10237,35 +10236,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0.21, y: 1.41, z: -0.84}
---- !u!114 &508323507
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 508323504}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 778bf44dc02629f48a0581e67ba82c94, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxHP: 100000
-  currentHP: 0
-  navMeshAgent: {fileID: 508323508}
-  target: {fileID: 649730350}
-  detectionRadius: 150
-  attackRange: 2.5
-  retreatRange: 5
-  maxDistance: 50
-  animator: {fileID: 508323505}
-  attackCooldown: 2
-  damage: 10
-  damageZone: {fileID: 1222976866}
-  runSoundEffect: {fileID: 8300000, guid: 78aa0d3d8be0dd74790af73f31814dd9, type: 3}
-  attackSoundEffect: {fileID: 8300000, guid: 5c774ee3d4e5d794fb796641c5ff0af4, type: 3}
-  maxSoundDistance: 50
-  itemPrefab: {fileID: 0}
-  bossHealthBar: {fileID: 872678836}
 --- !u!195 &508323508
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -10384,6 +10354,22 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &508323510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 508323504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d589a0a35b3f47498b17604a6835491, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHP: 100
+  healthBar: {fileID: 872678835}
+  player: {fileID: 649730350}
+  detectRange: 10
 --- !u!1001 &511316513
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -35586,7 +35572,6 @@ MonoBehaviour:
   attackSoundEffect: {fileID: 8300000, guid: 5c774ee3d4e5d794fb796641c5ff0af4, type: 3}
   maxSoundDistance: 50
   itemPrefab: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
-  bossHealthBar: {fileID: 0}
 --- !u!143 &1741509412
 CharacterController:
   m_ObjectHideFlags: 0
@@ -37707,7 +37692,6 @@ MonoBehaviour:
   attackSoundEffect: {fileID: 8300000, guid: 5c774ee3d4e5d794fb796641c5ff0af4, type: 3}
   maxSoundDistance: 50
   itemPrefab: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
-  bossHealthBar: {fileID: 0}
 --- !u!143 &1814964834
 CharacterController:
   m_ObjectHideFlags: 0
@@ -41641,7 +41625,6 @@ MonoBehaviour:
   attackSoundEffect: {fileID: 8300000, guid: 5c774ee3d4e5d794fb796641c5ff0af4, type: 3}
   maxSoundDistance: 50
   itemPrefab: {fileID: 1000012970591572, guid: 7cafb89b5a0f61f479d0a748962abbbc, type: 3}
-  bossHealthBar: {fileID: 0}
 --- !u!82 &2026841125
 AudioSource:
   m_ObjectHideFlags: 0
@@ -41991,7 +41974,6 @@ MonoBehaviour:
   attackSoundEffect: {fileID: 8300000, guid: 5c774ee3d4e5d794fb796641c5ff0af4, type: 3}
   maxSoundDistance: 50
   itemPrefab: {fileID: 1000013317980782, guid: 2cf6690298568294cb6b655c0a3aeb87, type: 3}
-  bossHealthBar: {fileID: 0}
 --- !u!195 &2034171254
 NavMeshAgent:
   m_ObjectHideFlags: 0

@@ -106,6 +106,7 @@ MonoBehaviour:
   - Albino
   - bebu
   - Skeleton
+  - Boss
   maxDistance: 50
   audioSource: {fileID: 836241215610354666}
   explosionSoundEX: {fileID: 8300000, guid: 41772a70a5343a94db99d5dc9a69d1f8, type: 3}
