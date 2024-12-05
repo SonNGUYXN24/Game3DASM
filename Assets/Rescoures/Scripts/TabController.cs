@@ -27,7 +27,7 @@ public class TabController : MonoBehaviour
             bool isActive = tabPanel.activeSelf;
             tabPanel.SetActive(!isActive);
 
-            if (!isActive)
+            if (tabPanel.activeSelf)
             {
                 ShowInfo(); // Hiện panel Info mặc định khi canvas được bật
             }
@@ -40,7 +40,6 @@ public class TabController : MonoBehaviour
         panelInfo.SetActive(true);
         panelInventory.SetActive(false);
         panelQuest.SetActive(false);
-
     }
 
     public void ShowInventory()
@@ -49,7 +48,6 @@ public class TabController : MonoBehaviour
         panelInfo.SetActive(false);
         panelInventory.SetActive(true);
         panelQuest.SetActive(false);
-
     }
 
     public void ShowQuest()
@@ -58,15 +56,5 @@ public class TabController : MonoBehaviour
         panelInfo.SetActive(false);
         panelInventory.SetActive(false);
         panelQuest.SetActive(true);
-
-    }
-
-    public void ShowQuit()
-    {
-        clickSoundEffect.Play(); // Phát âm thanh click
-        panelInfo.SetActive(false);
-        panelInventory.SetActive(false);
-        panelQuest.SetActive(false);
-        tabPanel.SetActive(false);
     }
 }

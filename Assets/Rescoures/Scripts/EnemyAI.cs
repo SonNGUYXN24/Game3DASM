@@ -20,6 +20,11 @@ public class EnemyAI : Health
     private Vector3 originalPosition; // Vị trí ban đầu
     private CharacterState currentState = CharacterState.Normal; // Trạng thái hiện tại
 
+    // Di chuyển ngẫu nhiên
+    public float wanderRadius = 10f; // Bán kính lang thang
+    public float wanderDelay = 5f; // Thời gian chờ trước khi chọn vị trí tiếp theo
+    private float lastWanderTime = 0f;
+
     // Biến âm thanh
     public AudioClip runSoundEffect;
     public AudioClip attackSoundEffect;
@@ -28,8 +33,7 @@ public class EnemyAI : Health
 
     // Biến để sinh vật phẩm
     public GameObject itemPrefab;
-    // Biến để quản lý thanh máu
-    
+
     public enum CharacterState
     {
         Normal,
@@ -64,7 +68,6 @@ public class EnemyAI : Health
             Debug.LogError("Enemy không nằm trên NavMesh.");
             enabled = false; // Tắt script để tránh lỗi
         }
-
     }
 
     private void Update()
@@ -86,17 +89,34 @@ public class EnemyAI : Health
         }
         else
         {
-            // Quay về vị trí ban đầu nếu ra khỏi phạm vi
-            navMeshAgent.SetDestination(originalPosition);
-            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
-
-            if (distanceToOriginal < 1f)
+            // Nếu không phát hiện mục tiêu, lang thang ngẫu nhiên
+            if (distanceToOriginal > maxDistance)
             {
-                StopRunSound();
-                ChangeState(CharacterState.Normal);
+                navMeshAgent.SetDestination(originalPosition); // Trở về vị trí ban đầu
             }
+            else
+            {
+                Wander();
+            }
+            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
         }
+    }
 
+    private void Wander()
+    {
+        if (Time.time > lastWanderTime + wanderDelay)
+        {
+            Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
+            randomDirection += originalPosition;
+
+            if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, wanderRadius, NavMesh.AllAreas))
+            {
+                navMeshAgent.SetDestination(hit.position);
+                PlayRunSound();
+            }
+
+            lastWanderTime = Time.time;
+        }
     }
 
     private void HandleMovementAndAttack(float distanceToTarget)
@@ -140,6 +160,14 @@ public class EnemyAI : Health
         }
     }
 
+    private void PlayAttackSound()
+    {
+        if (attackSoundEffect != null)
+        {
+            audioSource.PlayOneShot(attackSoundEffect);
+        }
+    }
+
     private void StopRunSound()
     {
         if (audioSource.isPlaying && audioSource.clip == runSoundEffect)
@@ -164,7 +192,6 @@ public class EnemyAI : Health
     {
         if (currentState == newState) return;
 
-        // Thoát trạng thái hiện tại
         switch (currentState)
         {
             case CharacterState.Normal:
@@ -174,7 +201,6 @@ public class EnemyAI : Health
                 break;
         }
 
-        // Bắt đầu trạng thái mới
         switch (newState)
         {
             case CharacterState.Normal:
@@ -186,7 +212,7 @@ public class EnemyAI : Health
             case CharacterState.Die:
                 navMeshAgent.enabled = false;
                 animator.SetTrigger("Die");
-                SpawnItem(); // Sinh vật phẩm khi Enemy chết
+                SpawnItem();
                 Destroy(gameObject, 5f);
                 break;
         }
@@ -201,21 +227,14 @@ public class EnemyAI : Health
         {
             ChangeState(CharacterState.Die);
         }
-
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void SpawnItem()
     {
-        if (other.CompareTag("SwordFire"))
+        if (itemPrefab != null)
         {
-            TakeDamage(50);
+            Instantiate(itemPrefab, transform.position, Quaternion.identity);
         }
-    }
-
-    // Phương thức gọi bởi sự kiện animation khi Enemy tấn công xong
-    public void OnAttackEnd()
-    {
-        ChangeState(CharacterState.Normal);
     }
 
     // Phương thức sự kiện bắt đầu vùng sát thương khi animation tấn công bắt đầu
@@ -231,35 +250,9 @@ public class EnemyAI : Health
         damageZone.EndAttack();
     }
 
-    private void PlayAttackSound()
+    // Phương thức được gọi khi animation tấn công kết thúc
+    public void OnAttackEnd()
     {
-        if (attackSoundEffect != null)
-        {
-            audioSource.PlayOneShot(attackSoundEffect);
-        }
-    }
-
-    private void SpawnItem()
-    {
-        if (itemPrefab != null)
-        {
-            Instantiate(itemPrefab, transform.position, Quaternion.identity);
-        }
-    }
-
-    private void OnDestroy()
-    {
-        // Tìm người chơi
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player != null)
-        {
-            // Lấy script PlayerQuest từ người chơi
-            PlayerQuest playerQuest = player.GetComponent<PlayerQuest>();
-            if (playerQuest != null)
-            {
-                // Gửi thông báo cập nhật tiến độ nhiệm vụ dựa trên tag của Enemy
-                playerQuest.CollectItem(gameObject.tag); // Tag của quái được truyền vào
-            }
-        }
+        ChangeState(CharacterState.Normal);
     }
 }

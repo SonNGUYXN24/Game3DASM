@@ -25,6 +25,7 @@ public class Character : Health
     public ParticleSystem attackHitFX;
     public AudioSource audioSource;
     public AudioClip attackSound;
+    public AudioClip footSteps; // Thêm biến âm thanh bước chân
 
     public float healthRegenRate = 2f; // Lượng máu hồi mỗi giây
     public enum CharacterState
@@ -52,10 +53,13 @@ public class Character : Health
         {
             case CharacterState.Normal:
                 CalculateMovement();
+                HandleFootsteps(); // Thêm xử lý âm thanh bước chân
                 break;
             case CharacterState.Attack:
+                HandleFootsteps(false); // Dừng bước chân khi tấn công
                 break;
             case CharacterState.Die:
+                HandleFootsteps(false); // Dừng bước chân khi chết
                 return;
         }
 
@@ -143,6 +147,26 @@ public class Character : Health
         currentState = newState;
     }
 
+    private void HandleFootsteps(bool play = true)
+    {
+        if (play && movementVelocity.magnitude > 0.1f)
+        {
+            if (!audioSource.isPlaying)
+            {
+                audioSource.clip = footSteps;
+                audioSource.loop = true;
+                audioSource.Play();
+            }
+        }
+        else
+        {
+            if (audioSource.isPlaying && audioSource.clip == footSteps)
+            {
+                audioSource.Stop();
+            }
+        }
+    }
+
     public override void TakeDamage(float damage)
     {
         base.TakeDamage(damage);
@@ -193,7 +217,7 @@ public class Character : Health
 
     public void EndAttack()
     {
-        damageZone.EndAttack();
+        (damageZone).EndAttack();
         attackHitFX.Stop(); // Dừng Particle System khi kết thúc tấn công
     }
 
