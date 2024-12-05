@@ -131,7 +131,7 @@ MonoBehaviour:
   - bebu
   - Skeleton
   - Boss
-  maxDistance: 20
+  maxDistance: 30
   audioSource: {fileID: 5872655966510960044}
   explosionSoundEX: {fileID: 8300000, guid: 41772a70a5343a94db99d5dc9a69d1f8, type: 3}
   rotationSwordEF: {fileID: 8300000, guid: be1e654f5b0b66e4d8dc37031f8e2a9a, type: 3}

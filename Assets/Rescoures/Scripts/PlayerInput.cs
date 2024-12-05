@@ -84,7 +84,7 @@ public class PlayerInput : MonoBehaviour
         {
             if (!attackInput)
             {
-                attackInput = Input.GetMouseButtonDown(0);
+                attackInput = Input.GetKeyDown(KeyCode.F);
             }
             if (!fireSwordInput)
             {

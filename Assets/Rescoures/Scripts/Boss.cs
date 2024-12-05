@@ -22,14 +22,16 @@ public class Boss : MonoBehaviour
     public AudioClip fireAttackSound;
     public AudioClip moveSound;
     public AudioClip dieSound;
+
     public ParticleSystem fireAttackParticles;
+    public ParticleSystem normalAttackParticles; // Hiệu ứng tấn công thường
     public Collider normalAttackCollider;
     public Collider fireAttackCollider;
-    public DamageZone damageZone; // Tham chiếu đến vùng gây sát thương
+    public DamageZone damageZone;
 
-    public NavMeshAgent navMeshAgent; // Dùng để di chuyển
-    public float wanderRadius = 10f; // Bán kính di chuyển ngẫu nhiên
-    public float wanderDelay = 5f; // Thời gian chờ giữa các lần di chuyển
+    public NavMeshAgent navMeshAgent;
+    public float wanderRadius = 10f;
+    public float wanderDelay = 5f;
     private float lastWanderTime = 0f;
     private bool isPlayerDetected = false;
 
@@ -41,6 +43,7 @@ public class Boss : MonoBehaviour
         healthBar.gameObject.SetActive(false);
 
         fireAttackParticles.Stop();
+        normalAttackParticles.Stop();
         normalAttackCollider.enabled = false;
         fireAttackCollider.enabled = false;
 
@@ -58,27 +61,33 @@ public class Boss : MonoBehaviour
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
         isPlayerDetected = distanceToPlayer <= detectRange;
 
-        // Chuyển đổi trạng thái dựa trên tình huống
         if (isPlayerDetected)
         {
+            healthBar.gameObject.SetActive(true);
             if (distanceToPlayer <= attackRange)
             {
-                TransitionToState(fireAttackTimer >= fireAttackCooldown ? BossState.FireAttack : BossState.NormalAttack);
+                // Ưu tiên trạng thái FireAttack nếu cooldown đã sẵn sàng
+                if (fireAttackTimer >= fireAttackCooldown && currentState != BossState.FireAttack)
+                {
+                    TransitionToState(BossState.FireAttack);
+                }
+                else if (currentState != BossState.FireAttack) // Chỉ chuyển sang NormalAttack nếu không phải FireAttack
+                {
+                    TransitionToState(BossState.NormalAttack);
+                }
             }
             else
             {
-                TransitionToState(BossState.Move); // Đuổi theo Player
+                TransitionToState(BossState.Move);
             }
         }
         else
         {
-            TransitionToState(BossState.Move); // Di chuyển ngẫu nhiên
+            TransitionToState(BossState.Move);
         }
 
-        // Cập nhật bộ đếm cho FireAttack
         fireAttackTimer += Time.deltaTime;
 
-        // Xử lý trạng thái
         switch (currentState)
         {
             case BossState.Normal:
@@ -103,6 +112,7 @@ public class Boss : MonoBehaviour
     {
         animator.SetFloat("Speed", 0);
         fireAttackParticles.Stop();
+        normalAttackParticles.Stop();
         normalAttackCollider.enabled = false;
         fireAttackCollider.enabled = false;
     }
@@ -111,17 +121,16 @@ public class Boss : MonoBehaviour
     {
         animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
         fireAttackParticles.Stop();
+        normalAttackParticles.Stop();
         normalAttackCollider.enabled = false;
         fireAttackCollider.enabled = false;
 
         if (isPlayerDetected)
         {
-            // Đuổi theo Player
             navMeshAgent.SetDestination(player.position);
         }
         else
         {
-            // Di chuyển ngẫu nhiên
             Wander();
         }
     }
@@ -147,10 +156,15 @@ public class Boss : MonoBehaviour
         animator.SetTrigger("NormalAttack");
         normalAttackCollider.enabled = true;
         fireAttackCollider.enabled = false;
-        fireAttackParticles.Stop();
+
+        // Bật hiệu ứng tấn công thường
+        normalAttackParticles.Play();
 
         // Phát âm thanh tấn công thường
         PlaySound(normalAttackSound);
+
+        // Tắt hiệu ứng sau 1 giây
+        Invoke(nameof(StopNormalAttackEffect), 1f);
     }
 
     private void HandleFireAttackState()
@@ -159,23 +173,30 @@ public class Boss : MonoBehaviour
         normalAttackCollider.enabled = false;
         fireAttackCollider.enabled = true;
 
-        // Hướng các hiệu ứng về phía Player
         Vector3 direction = (player.position - transform.position).normalized;
         fireAttackParticles.transform.forward = direction;
         fireAttackCollider.transform.forward = direction;
 
+        // Bật hiệu ứng tấn công lửa
         fireAttackParticles.Play();
 
         // Phát âm thanh tấn công lửa
         PlaySound(fireAttackSound);
 
-        fireAttackTimer = 0f; // Reset bộ đếm thời gian tấn công lửa
+        fireAttackTimer = 0f;
+
+        // Tắt hiệu ứng sau 3 giây
+        Invoke(nameof(StopFireAttackEffect), 3f);
+
+        // Đảm bảo trạng thái không bị gián đoạn
+        Invoke(nameof(ResetToNormalState), 3.1f);
     }
 
     private void HandleDieState()
     {
         animator.SetTrigger("Die");
         fireAttackParticles.Stop();
+        normalAttackParticles.Stop();
         normalAttackCollider.enabled = false;
         fireAttackCollider.enabled = false;
     }
@@ -202,8 +223,24 @@ public class Boss : MonoBehaviour
     private void PlaySound(AudioClip clip)
     {
         if (clip == null) return;
-
         AudioSource.PlayClipAtPoint(clip, transform.position);
+    }
+
+    private void StopNormalAttackEffect()
+    {
+        normalAttackParticles.Stop();
+        normalAttackCollider.enabled = false;
+    }
+
+    private void StopFireAttackEffect()
+    {
+        fireAttackParticles.Stop();
+        fireAttackCollider.enabled = false;
+    }
+
+    private void ResetToNormalState()
+    {
+        TransitionToState(BossState.Normal);
     }
 
     // Animation Events

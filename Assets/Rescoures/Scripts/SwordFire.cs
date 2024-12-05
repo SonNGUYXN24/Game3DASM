@@ -1,16 +1,17 @@
 using System.Collections;
-using System.Collections.Generic; // Thêm using cho List
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SwordFire : MonoBehaviour
 {
     public float speed = 10f;
-    public float lifetime = 5f; // Thời gian tồn tại nếu không va chạm với "Albino"
+    public float lifetime = 5f; // Thời gian tồn tại nếu không va chạm
     public ParticleSystem fireEffect;
     public ParticleSystem explosionEffect;
-    public Vector3 shootDirection = Vector3.forward; // Biến hướng bắn có thể chỉnh
+    public Vector3 shootDirection = Vector3.forward; // Hướng bắn mặc định
     public List<string> enemyTags; // Danh sách tag của Enemy
     public float maxDistance = 20f; // Khoảng cách tối đa để kiếm bay theo Enemy
+    public float damageAmount = 50f; // Lượng sát thương gây ra
 
     private bool hasExploded = false;
     private bool isRotationComplete = false;
@@ -96,7 +97,6 @@ public class SwordFire : MonoBehaviour
         }
     }
 
-
     void OnTriggerEnter(Collider other)
     {
         // Kiểm tra nếu tag của đối tượng va chạm thuộc danh sách enemyTags
@@ -107,11 +107,18 @@ public class SwordFire : MonoBehaviour
             fireEffect.Stop();
             explosionEffect.Play();
             audioSource.PlayOneShot(explosionSoundEX);
+
+            // Gây sát thương
+            var health = other.GetComponent<Health>();
+            if (health != null)
+            {
+                health.TakeDamage(damageAmount);
+            }
+
             // Dừng lại và xóa kiếm sau 2 giây
             StartCoroutine(ExplodeAndDestroy());
         }
     }
-
 
     private IEnumerator ExplodeAndDestroy()
     {

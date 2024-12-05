@@ -6,6 +6,8 @@ public class TutorialManager : MonoBehaviour
     public GameObject panelTutorial2; // Panel Tutorial 2
     public GameObject panelTutorial3; // Panel Tutorial 3
 
+    public GameObject escController;
+
     private int currentPanelIndex = 0; // Panel hiện tại (0 = chưa mở, 1 = panel1, 2 = panel2, 3 = panel3)
     private GameObject[] panels; // Mảng chứa các panel
 
@@ -24,6 +26,7 @@ public class TutorialManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             CloseAllPanels();
+            escController.SetActive(true);
         }
     }
 
@@ -32,6 +35,7 @@ public class TutorialManager : MonoBehaviour
         // Mở panel đầu tiên
         currentPanelIndex = 1; // Panel đầu tiên là 1
         UpdatePanels();
+        escController.SetActive(false);
     }
 
     public void SlideToNextTutorial()
