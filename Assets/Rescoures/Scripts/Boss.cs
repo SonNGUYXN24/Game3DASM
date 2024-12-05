@@ -1,267 +1,215 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UI;
 
-public class Boss : MonoBehaviour
+public class Boss : Health
 {
-    public enum BossState { Normal, Move, NormalAttack, FireAttack, Die }
-    public BossState currentState = BossState.Normal;
-
-    public float maxHP = 100000f;
-    private float currentHP;
-    public Slider healthBar;
-    public Transform player;
-    public float detectRange = 50f; // Phạm vi phát hiện Player
-    public float attackRange = 20f; // Khoảng cách để tấn công Player
-    public float moveSpeed = 5f; // Tốc độ di chuyển
-    public float fireAttackCooldown = 5f;
-    private float fireAttackTimer = 0f;
-
+    public NavMeshAgent navMeshAgent;
+    public Transform target; // Mục tiêu (Player)
+    public float detectionRadius = 20f; // Bán kính phát hiện mục tiêu
+    public float attackRange = 5f; // Khoảng cách tấn công thông thường
+    public float fireAttackRange = 10f; // Khoảng cách tấn công bằng lửa
+    public float retreatRange = 2f; // Khoảng cách tối thiểu để giữ khoảng cách khi tấn công
+    public float maxDistance = 50f; // Khoảng cách tối đa từ vị trí ban đầu
     public Animator animator;
-    public AudioClip normalAttackSound;
-    public AudioClip fireAttackSound;
-    public AudioClip moveSound;
-    public AudioClip dieSound;
-
-    public ParticleSystem fireAttackParticles;
-    public ParticleSystem normalAttackParticles; // Hiệu ứng tấn công thường
-    public Collider normalAttackCollider;
-    public Collider fireAttackCollider;
+    public float attackCooldown = 2f; // Thời gian hồi đòn tấn công thông thường
+    public float fireAttackCooldown = 5f; // Thời gian hồi đòn tấn công bằng lửa
+    public float damage = 20f; // Lượng sát thương thông thường
+    public float fireDamage = 40f; // Sát thương đòn lửa
+    private float lastAttackTime = 0f; // Lần tấn công cuối cùng
+    private float lastFireAttackTime = 0f; // Lần tấn công lửa cuối cùng
     public DamageZone damageZone;
 
-    public NavMeshAgent navMeshAgent;
-    public float wanderRadius = 10f;
-    public float wanderDelay = 5f;
-    private float lastWanderTime = 0f;
-    private bool isPlayerDetected = false;
+    private Vector3 originalPosition; // Vị trí ban đầu
+    private BossState currentState = BossState.Normal; // Trạng thái hiện tại
+
+    public ParticleSystem fireAttackParticles; // Hiệu ứng đòn lửa
+    public AudioClip runSoundEffect;
+    public AudioClip attackSoundEffect;
+    public AudioClip fireAttackSoundEffect;
+    public AudioClip dieSoundEffect;
+    private AudioSource audioSource;
+
+    public enum BossState
+    {
+        Normal,
+        NormalAttack,
+        FireAttack,
+        Die
+    }
 
     private void Start()
     {
-        currentHP = maxHP;
-        healthBar.maxValue = maxHP;
-        healthBar.value = currentHP;
-        healthBar.gameObject.SetActive(false);
-
-        fireAttackParticles.Stop();
-        normalAttackParticles.Stop();
-        normalAttackCollider.enabled = false;
-        fireAttackCollider.enabled = false;
-
         if (navMeshAgent == null)
         {
             Debug.LogError("NavMeshAgent chưa được gắn.");
             return;
         }
+
+        if (target == null)
+        {
+            Debug.LogError("Target chưa được gắn.");
+            return;
+        }
+
+        originalPosition = transform.position;
+        currentHP = maxHP;
+
+        // Thiết lập AudioSource
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.loop = true;
+
+        // Kiểm tra nếu Boss đang trên NavMesh
+        if (!navMeshAgent.isOnNavMesh)
+        {
+            Debug.LogError("Boss không nằm trên NavMesh.");
+            enabled = false; // Tắt script để tránh lỗi
+        }
     }
 
     private void Update()
     {
-        if (currentState == BossState.Die) return;
-
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-        isPlayerDetected = distanceToPlayer <= detectRange;
-
-        if (isPlayerDetected)
+        if (currentState == BossState.Die || navMeshAgent == null || !navMeshAgent.isActiveAndEnabled)
         {
-            healthBar.gameObject.SetActive(true);
-            if (distanceToPlayer <= attackRange)
+            return;
+        }
+
+        float distanceToTarget = Vector3.Distance(target.position, transform.position);
+        float distanceToOriginal = Vector3.Distance(originalPosition, transform.position);
+
+        if (distanceToTarget <= detectionRadius && distanceToOriginal <= maxDistance)
+        {
+            HandleMovementAndAttack(distanceToTarget);
+        }
+        else
+        {
+            if (distanceToOriginal > maxDistance)
             {
-                // Ưu tiên trạng thái FireAttack nếu cooldown đã sẵn sàng
-                if (fireAttackTimer >= fireAttackCooldown && currentState != BossState.FireAttack)
-                {
-                    TransitionToState(BossState.FireAttack);
-                }
-                else if (currentState != BossState.FireAttack) // Chỉ chuyển sang NormalAttack nếu không phải FireAttack
-                {
-                    TransitionToState(BossState.NormalAttack);
-                }
+                navMeshAgent.SetDestination(originalPosition);
             }
             else
             {
-                TransitionToState(BossState.Move);
+                Wander();
             }
-        }
-        else
-        {
-            TransitionToState(BossState.Move);
-        }
-
-        fireAttackTimer += Time.deltaTime;
-
-        switch (currentState)
-        {
-            case BossState.Normal:
-                HandleNormalState();
-                break;
-            case BossState.Move:
-                HandleMoveState();
-                break;
-            case BossState.NormalAttack:
-                HandleNormalAttackState();
-                break;
-            case BossState.FireAttack:
-                HandleFireAttackState();
-                break;
-            case BossState.Die:
-                HandleDieState();
-                break;
-        }
-    }
-
-    private void HandleNormalState()
-    {
-        animator.SetFloat("Speed", 0);
-        fireAttackParticles.Stop();
-        normalAttackParticles.Stop();
-        normalAttackCollider.enabled = false;
-        fireAttackCollider.enabled = false;
-    }
-
-    private void HandleMoveState()
-    {
-        animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
-        fireAttackParticles.Stop();
-        normalAttackParticles.Stop();
-        normalAttackCollider.enabled = false;
-        fireAttackCollider.enabled = false;
-
-        if (isPlayerDetected)
-        {
-            navMeshAgent.SetDestination(player.position);
-        }
-        else
-        {
-            Wander();
+            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
         }
     }
 
     private void Wander()
     {
-        if (Time.time > lastWanderTime + wanderDelay)
+        Vector3 randomDirection = Random.insideUnitSphere * 10f;
+        randomDirection += originalPosition;
+
+        if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, 10f, NavMesh.AllAreas))
         {
-            Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
-            randomDirection += transform.position;
-
-            if (NavMesh.SamplePosition(randomDirection, out NavMeshHit hit, wanderRadius, NavMesh.AllAreas))
-            {
-                navMeshAgent.SetDestination(hit.position);
-            }
-
-            lastWanderTime = Time.time;
+            navMeshAgent.SetDestination(hit.position);
         }
     }
 
-    private void HandleNormalAttackState()
+    private void HandleMovementAndAttack(float distanceToTarget)
     {
-        animator.SetTrigger("NormalAttack");
-        normalAttackCollider.enabled = true;
-        fireAttackCollider.enabled = false;
-
-        // Bật hiệu ứng tấn công thường
-        normalAttackParticles.Play();
-
-        // Phát âm thanh tấn công thường
-        PlaySound(normalAttackSound);
-
-        // Tắt hiệu ứng sau 1 giây
-        Invoke(nameof(StopNormalAttackEffect), 1f);
+        if (distanceToTarget > fireAttackRange)
+        {
+            // Di chuyển đến gần mục tiêu
+            navMeshAgent.SetDestination(target.position);
+            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
+            ChangeState(BossState.Normal);
+        }
+        else if (distanceToTarget <= fireAttackRange && Time.time > lastFireAttackTime + fireAttackCooldown)
+        {
+            // Tấn công bằng lửa
+            navMeshAgent.SetDestination(transform.position); // Dừng di chuyển
+            ChangeState(BossState.FireAttack);
+            lastFireAttackTime = Time.time;
+        }
+        else if (distanceToTarget <= attackRange && Time.time > lastAttackTime + attackCooldown)
+        {
+            // Tấn công thông thường
+            navMeshAgent.SetDestination(transform.position);
+            ChangeState(BossState.NormalAttack);
+            lastAttackTime = Time.time;
+        }
+        else if (distanceToTarget <= retreatRange)
+        {
+            // Rút lui nếu quá sát
+            Vector3 retreatDirection = (transform.position - target.position).normalized;
+            Vector3 retreatPosition = transform.position + retreatDirection * 2f;
+            navMeshAgent.SetDestination(retreatPosition);
+            animator.SetFloat("Speed", navMeshAgent.velocity.magnitude);
+        }
     }
 
-    private void HandleFireAttackState()
-    {
-        animator.SetTrigger("FireAttack");
-        normalAttackCollider.enabled = false;
-        fireAttackCollider.enabled = true;
-
-        Vector3 direction = (player.position - transform.position).normalized;
-        fireAttackParticles.transform.forward = direction;
-        fireAttackCollider.transform.forward = direction;
-
-        // Bật hiệu ứng tấn công lửa
-        fireAttackParticles.Play();
-
-        // Phát âm thanh tấn công lửa
-        PlaySound(fireAttackSound);
-
-        fireAttackTimer = 0f;
-
-        // Tắt hiệu ứng sau 3 giây
-        Invoke(nameof(StopFireAttackEffect), 3f);
-
-        // Đảm bảo trạng thái không bị gián đoạn
-        Invoke(nameof(ResetToNormalState), 3.1f);
-    }
-
-    private void HandleDieState()
-    {
-        animator.SetTrigger("Die");
-        fireAttackParticles.Stop();
-        normalAttackParticles.Stop();
-        normalAttackCollider.enabled = false;
-        fireAttackCollider.enabled = false;
-    }
-
-    private void TransitionToState(BossState newState)
+    private void ChangeState(BossState newState)
     {
         if (currentState == newState) return;
+
+        switch (currentState)
+        {
+            case BossState.Normal:
+                damageZone.EndAttack();
+                break;
+            case BossState.NormalAttack:
+                break;
+            case BossState.FireAttack:
+                fireAttackParticles.Stop();
+                break;
+        }
+
+        switch (newState)
+        {
+            case BossState.Normal:
+                animator.SetFloat("Speed", 0f);
+                break;
+            case BossState.NormalAttack:
+                animator.SetTrigger("NormalAttack");
+                break;
+            case BossState.FireAttack:
+                animator.SetTrigger("FireAttack");
+                fireAttackParticles.Play();
+                PlaySound(fireAttackSoundEffect);
+                break;
+            case BossState.Die:
+                navMeshAgent.enabled = false;
+                animator.SetTrigger("Die");
+                PlaySound(dieSoundEffect);
+                Destroy(gameObject, 5f);
+                break;
+        }
+
         currentState = newState;
     }
 
-    public void TakeDamage(float damage)
+    public override void TakeDamage(float damage)
     {
-        if (currentState == BossState.Die) return;
-
-        currentHP -= damage;
-        healthBar.value = currentHP;
-
+        base.TakeDamage(damage);
         if (currentHP <= 0)
         {
-            TransitionToState(BossState.Die);
+            ChangeState(BossState.Die);
         }
     }
 
     private void PlaySound(AudioClip clip)
     {
-        if (clip == null) return;
-        AudioSource.PlayClipAtPoint(clip, transform.position);
-    }
-
-    private void StopNormalAttackEffect()
-    {
-        normalAttackParticles.Stop();
-        normalAttackCollider.enabled = false;
-    }
-
-    private void StopFireAttackEffect()
-    {
-        fireAttackParticles.Stop();
-        fireAttackCollider.enabled = false;
-    }
-
-    private void ResetToNormalState()
-    {
-        TransitionToState(BossState.Normal);
+        if (clip != null)
+        {
+            audioSource.PlayOneShot(clip);
+        }
     }
 
     // Animation Events
     public void BossBeginAttack()
     {
-        if (damageZone != null)
-        {
-            damageZone.BeginAttack();
-        }
+        damageZone.BeginAttack();
+        PlaySound(attackSoundEffect);
     }
 
     public void BossEndAttack()
     {
-        if (damageZone != null)
-        {
-            damageZone.EndAttack();
-        }
+        damageZone.EndAttack();
     }
 
     public void BossOnAttackEnd()
     {
-        TransitionToState(BossState.Normal);
+        ChangeState(BossState.Normal);
     }
 }

@@ -9,7 +9,7 @@ public class SwordFireRotation : MonoBehaviour
     public ParticleSystem explosionEffect;
     public List<string> enemyTags; // Danh sách tag của Enemy
     public float maxDistance = 20f; // Khoảng cách tối đa để kiếm bay theo Enemy
-
+    public float damageAmount = 100f; // Lượng sát thương gây ra
     private bool hasExploded = false;
     private bool isChasingEnemy = false; // Kiểm tra xem đã bắt đầu bay tới Enemy chưa
     private GameObject target; // Thêm biến để lưu trữ mục tiêu
@@ -82,6 +82,13 @@ public class SwordFireRotation : MonoBehaviour
             hasExploded = true;
             explosionEffect.Play();
             audioSource.PlayOneShot(explosionSoundEX);
+
+            // Gây sát thương
+            var health = other.GetComponent<Health>();
+            if (health != null)
+            {
+                health.TakeDamage(damageAmount);
+            }
 
             // Dừng lại và xóa kiếm sau 2 giây
             StartCoroutine(ExplodeAndDestroy());

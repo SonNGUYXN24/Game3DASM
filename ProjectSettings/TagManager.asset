@@ -14,6 +14,8 @@ TagManager:
   - bebu
   - NPC
   - Boss
+  - Directional Light
+  - BossBattle
   layers:
   - Default
   - TransparentFX
