@@ -264,7 +264,7 @@ public class PlayerInput : MonoBehaviour
     {
         int minutes = Mathf.FloorToInt(currentFlyTime / 60);
         int seconds = Mathf.FloorToInt(currentFlyTime % 60);
-        flySkillTimerText.text = $"Thời gian cường hoá:{minutes:00}:{seconds:00}";
+        flySkillTimerText.text = $"Thời gian cường hoá: {minutes:00}:{seconds:00}";
     }
 
 

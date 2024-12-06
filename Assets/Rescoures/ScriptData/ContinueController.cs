@@ -22,6 +22,7 @@ public class ContinueController : MonoBehaviour
         if (PlayerPrefs.GetInt("HasData", 0) == 1)
         {
             continueButton.gameObject.SetActive(true);
+            continueButton.onClick.AddListener(OnContinue); // Gắn sự kiện OnContinue cho nút Continue
         }
         else
         {
@@ -46,6 +47,9 @@ public class ContinueController : MonoBehaviour
         var data = AutoSave.Instance.LoadPlayerData();
         if (!string.IsNullOrEmpty(data.Item2))
         {
+            Debug.Log($"Loading Scene: {data.Item2}");
+            Debug.Log($"Restoring Player position to: {data.Item1}");
+
             SceneManager.LoadScene(data.Item2);
             StartCoroutine(WaitForSceneLoadAndPlacePlayer(data.Item1));
         }
@@ -55,15 +59,32 @@ public class ContinueController : MonoBehaviour
         }
     }
 
+
+
+
     private IEnumerator WaitForSceneLoadAndPlacePlayer(Vector3 playerPosition)
     {
-        yield return new WaitForEndOfFrame(); // Đợi scene load xong
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player != null)
+        // Đợi Scene load xong
+        yield return new WaitUntil(() => SceneManager.GetActiveScene().isLoaded);
+
+        // Tìm đối tượng Player và đợi nếu chưa tìm thấy
+        GameObject player = null;
+        while (player == null)
         {
-            player.transform.position = playerPosition;
+            player = GameObject.FindWithTag("Player");
+            yield return null; // Đợi 1 frame nếu Player chưa tồn tại
         }
+
+        // Đặt vị trí của Player
+        player.transform.position = playerPosition;
+        Debug.Log($"Player position set to: {player.transform.position}");
+
+        // Kiểm tra lại xem vị trí Player đã được gán đúng
+        yield return new WaitForEndOfFrame();
+        Debug.Log($"Final Player position: {player.transform.position}");
     }
+
+
 
     public void OnNewGame()
     {
@@ -144,16 +165,13 @@ public class ContinueController : MonoBehaviour
 
     private void HideAllOtherGameObjects()
     {
-        // Tìm tất cả các GameObject trong scene
         GameObject[] allObjects = FindObjectsOfType<GameObject>();
 
         foreach (GameObject obj in allObjects)
         {
-            // Bỏ qua các đối tượng cần giữ lại: GameObject chứa script, VideoPlayer, MainCamera, DirectionalLight, và videoCanvas
             if (obj == gameObject || obj == videoPlayer.gameObject || obj.CompareTag("MainCamera") || obj.name == "Directional Light" || obj == videoCanvas.gameObject || obj.name == "EventSystem" || obj.name == "AutoSave")
                 continue;
 
-            // Nếu GameObject đang hoạt động, ẩn nó và thêm vào danh sách
             if (obj.activeSelf)
             {
                 obj.SetActive(false);
@@ -164,7 +182,6 @@ public class ContinueController : MonoBehaviour
 
     private void ShowAllHiddenGameObjects()
     {
-        // Hiện lại tất cả các GameObject đã bị ẩn
         foreach (GameObject obj in hiddenObjects)
         {
             if (obj != null)
@@ -173,7 +190,6 @@ public class ContinueController : MonoBehaviour
             }
         }
 
-        // Xóa danh sách các GameObject đã xử lý
         hiddenObjects.Clear();
     }
 }

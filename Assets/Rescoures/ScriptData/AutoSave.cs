@@ -17,6 +17,29 @@ public class AutoSave : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        // Kiểm tra nếu nhấn phím F1
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            // Giả sử bạn có một Player trong game và cần lấy thông tin
+            GameObject player = GameObject.FindWithTag("Player");
+            if (player != null)
+            {
+                Vector3 playerPosition = player.transform.position;
+                string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                int collectedItems = 0; // Thay thế bằng logic lấy số lượng item đã thu thập
+
+                // Gọi hàm SavePlayerData để lưu dữ liệu
+                SavePlayerData(playerPosition, currentScene, collectedItems);
+            }
+            else
+            {
+                Debug.LogWarning("Không tìm thấy Player để lưu dữ liệu!");
+            }
+        }
+    }
+
     public void SavePlayerData(Vector3 playerPosition, string currentScene, int collectedItems)
     {
         PlayerPrefs.SetString("LastScene", currentScene);
@@ -26,8 +49,9 @@ public class AutoSave : MonoBehaviour
         PlayerPrefs.SetInt("CollectedItems", collectedItems);
         PlayerPrefs.SetInt("HasData", 1); // Đánh dấu là có dữ liệu
         PlayerPrefs.Save();
-        Debug.Log("Game data saved!");
+        Debug.Log($"Game data saved at position ({playerPosition.x}, {playerPosition.y}, {playerPosition.z}) in scene '{currentScene}'.");
     }
+
 
     public (Vector3, string, int) LoadPlayerData()
     {
